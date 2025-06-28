@@ -28,9 +28,13 @@ const timerSlice = createSlice({
     },
     updateTimer: (state, action) => {
       const timer = state.timers.find(timer => timer.id === action.payload);
-      if (timer && timer.isRunning) {
+      if (timer && timer.isRunning && timer.remainingTime > 0) {
         timer.remainingTime -= 1;
-        timer.isRunning = timer.remainingTime > 0;
+        // Only stop the timer when it reaches exactly 0
+        if (timer.remainingTime <= 0) {
+          timer.remainingTime = 0;
+          timer.isRunning = false;
+        }
       }
     },
     restartTimer: (state, action) => {

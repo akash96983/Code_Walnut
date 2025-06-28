@@ -1,8 +1,8 @@
 export class TimerAudio {
   private static instance: TimerAudio;
   private audioContext: AudioContext | null = null;
-  private oscillator: OscillatorNode | null = null;
-  private gainNode: GainNode | null = null;
+  private isPlaying: boolean = false;
+  private intervalId: number | null = null;
 
   private constructor() {}
 
@@ -24,6 +24,23 @@ export class TimerAudio {
   }
 
   async play(): Promise<void> {
+    if (this.isPlaying) return;
+    
+    this.isPlaying = true;
+    this.playLoop();
+  }
+
+  private async playLoop(): Promise<void> {
+    if (!this.isPlaying) return;
+
+    await this.playBeep();
+    
+    this.intervalId = window.setTimeout(() => {
+      this.playLoop();
+    }, 1000);
+  }
+
+  private async playBeep(): Promise<void> {
     try {
       await this.initializeAudioContext();
       
@@ -31,30 +48,21 @@ export class TimerAudio {
         throw new Error('AudioContext not initialized');
       }
 
-      // Create and configure oscillator
-      this.oscillator = this.audioContext.createOscillator();
-      this.gainNode = this.audioContext.createGain();
+      const oscillator = this.audioContext.createOscillator();
+      const gainNode = this.audioContext.createGain();
       
-      this.oscillator.type = 'sine';
-      this.oscillator.frequency.setValueAtTime(880, this.audioContext.currentTime); // A5 note
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(880, this.audioContext.currentTime);
       
-      // Configure gain (volume) envelope
-      this.gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-      this.gainNode.gain.linearRampToValueAtTime(0.5, this.audioContext.currentTime + 0.01);
-      this.gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.5);
+      gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.5, this.audioContext.currentTime + 0.01);
+      gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.5);
       
-      // Connect nodes
-      this.oscillator.connect(this.gainNode);
-      this.gainNode.connect(this.audioContext.destination);
+      oscillator.connect(gainNode);
+      gainNode.connect(this.audioContext.destination);
       
-      // Start and stop the oscillator
-      this.oscillator.start(this.audioContext.currentTime);
-      this.oscillator.stop(this.audioContext.currentTime + 0.5);
-      
-      // Cleanup after sound ends
-      setTimeout(() => {
-        this.cleanup();
-      }, 500);
+      oscillator.start(this.audioContext.currentTime);
+      oscillator.stop(this.audioContext.currentTime + 0.5);
 
     } catch (error) {
       console.error('Failed to play audio:', error);
@@ -62,23 +70,10 @@ export class TimerAudio {
   }
 
   stop(): void {
-    this.cleanup();
-  }
-
-  private cleanup(): void {
-    if (this.oscillator) {
-      try {
-        this.oscillator.stop();
-        this.oscillator.disconnect();
-      } catch (error) {
-        console.log(error)
-      }
-      this.oscillator = null;
-    }
-
-    if (this.gainNode) {
-      this.gainNode.disconnect();
-      this.gainNode = null;
+    this.isPlaying = false;
+    if (this.intervalId) {
+      clearTimeout(this.intervalId);
+      this.intervalId = null;
     }
   }
 }

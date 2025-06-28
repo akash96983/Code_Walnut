@@ -19,43 +19,89 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
   const intervalRef = useRef<number | null>(null);
   const timerAudio = TimerAudio.getInstance();
   const hasEndedRef = useRef(false);
+  const toastIdRef = useRef<string | number | null>(null);
 
   useEffect(() => {
-    if (timer.isRunning) {
+    if (timer.isRunning && timer.remainingTime > 0) {
+      // Clear any existing interval first
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      
+      // Start new interval
       intervalRef.current = window.setInterval(() => {
         updateTimer(timer.id);
-        
-        if (timer.remainingTime <= 1 && !hasEndedRef.current) {
-          hasEndedRef.current = true;
-          timerAudio.play().catch(console.error);
-          
-          toast.success(`Timer "${timer.title}" has ended!`, {
-            duration: 5000,
-            action: {
-              label: 'Dismiss',
-              onClick: timerAudio.stop,
-            },
-          });
-        }
       }, 1000);
+    } else {
+      // Clear interval when timer stops or finishes
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     }
 
-    return () => clearInterval(intervalRef.current!);
-  }, [timer.isRunning, timer.id, timer.remainingTime, timer.title, timerAudio, updateTimer]);
+    // Cleanup function
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [timer.isRunning, timer.id]); // Removed timer.remainingTime and updateTimer from dependencies
+
+  // Separate effect to handle timer completion
+  useEffect(() => {
+    if (timer.remainingTime === 0 && !timer.isRunning && !hasEndedRef.current) {
+      hasEndedRef.current = true;
+      timerAudio.play().catch(console.error);
+      
+      toastIdRef.current = toast.success(`Timer "${timer.title}" has ended!`, {
+        duration: Infinity,
+        action: {
+          label: 'Dismiss',
+          onClick: () => {
+            timerAudio.stop();
+            if (toastIdRef.current) {
+              toast.dismiss(toastIdRef.current);
+              toastIdRef.current = null;
+            }
+          },
+        },
+        onDismiss: () => {
+          timerAudio.stop();
+          toastIdRef.current = null;
+        },
+      });
+    }
+  }, [timer.remainingTime, timer.isRunning, timer.title, timerAudio]);
 
   const handleRestart = () => {
     hasEndedRef.current = false;
+    timerAudio.stop();
+    if (toastIdRef.current) {
+      toast.dismiss(toastIdRef.current);
+      toastIdRef.current = null;
+    }
     restartTimer(timer.id);
   };
 
   const handleDelete = () => {
     timerAudio.stop();
+    if (toastIdRef.current) {
+      toast.dismiss(toastIdRef.current);
+      toastIdRef.current = null;
+    }
     deleteTimer(timer.id);
   };
 
   const handleToggle = () => {
     if (timer.remainingTime <= 0) {
       hasEndedRef.current = false;
+      timerAudio.stop();
+      if (toastIdRef.current) {
+        toast.dismiss(toastIdRef.current);
+        toastIdRef.current = null;
+      }
     }
     toggleTimer(timer.id);
   };
