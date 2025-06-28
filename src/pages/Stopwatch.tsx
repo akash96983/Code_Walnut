@@ -70,24 +70,24 @@ import { Play, Pause, RotateCcw, Flag } from 'lucide-react';
     }, [isRunning]);
 
     return (
-      <div className=" bg-gray-50 p-4 ">
+      <div className="w-full">
         <div className="max-w-md mx-auto">
-          <h1 className="text-2xl font-bold text-gray-800 mb-8 text-center">Stopwatch</h1>
+          <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Stopwatch</h1>
           
-          <div className="bg-white rounded-lg shadow-sm border p-8">
+          <div className="bg-white rounded-lg shadow-sm border p-6 sm:p-8">
             {/* Time Display */}
-            <div className="text-center mb-8">
-              <div className="text-5xl font-mono font-bold text-gray-800 mb-2">
+            <div className="text-center mb-6 sm:mb-8">
+              <div className="text-4xl sm:text-5xl font-mono font-bold text-gray-800 mb-2">
                 {formatTime(time)}
               </div>
             </div>
 
             {/* Controls */}
-            <div className="flex justify-center gap-4 mb-6">
+            <div className="flex justify-center gap-3 sm:gap-4 mb-6">
               {/* Start/Pause Button */}
               <button
                 onClick={toggleStopwatch}
-                className={`p-3 rounded-full transition-colors ${
+                className={`p-3 sm:p-4 rounded-full transition-colors ${
                   isRunning
                     ? 'bg-red-100 text-red-600 hover:bg-red-200'
                     : 'bg-green-100 text-green-600 hover:bg-green-200'
@@ -105,7 +105,7 @@ import { Play, Pause, RotateCcw, Flag } from 'lucide-react';
               <button
                 onClick={recordLap}
                 disabled={time === 0}
-                className="p-3 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors disabled:bg-gray-100 disabled:text-gray-400"
+                className="p-3 sm:p-4 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors disabled:bg-gray-100 disabled:text-gray-400"
                 title="Record Lap"
               >
                 <Flag className="w-6 h-6" />
@@ -114,7 +114,7 @@ import { Play, Pause, RotateCcw, Flag } from 'lucide-react';
               {/* Reset Button */}
               <button
                 onClick={resetStopwatch}
-                className="p-3 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                className="p-3 sm:p-4 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                 title="Reset Stopwatch"
               >
                 <RotateCcw className="w-6 h-6" />
